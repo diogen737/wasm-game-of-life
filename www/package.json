@@ -1,0 +1,35 @@
+{
+  "name": "wasm-game-of-life-app",
+  "version": "0.1.0",
+  "description": "create an app to consume rust-generated wasm packages",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diogen737/wasm-game-of-life.git"
+  },
+  "keywords": [
+    "webassembly",
+    "wasm",
+    "rust",
+    "webpack"
+  ],
+  "author": "Oleg Musienko <diogen737@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/diogen737/wasm-game-of-life/issues"
+  },
+  "homepage": "https://github.com/diogen737/wasm-game-of-life#readme",
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "start": "webpack-dev-server"
+  },
+  "dependencies": {
+    "wasm-game-of-life": "file:../pkg"
+  },
+  "devDependencies": {
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.5",
+    "copy-webpack-plugin": "^5.0.0"
+  },
+  "main": "index.js"
+}
