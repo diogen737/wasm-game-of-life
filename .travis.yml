@@ -2,6 +2,8 @@ language: rust
 os: linux
 dist: xenial
 
+cache: cargo
+
 branches:
   only:
     - master
