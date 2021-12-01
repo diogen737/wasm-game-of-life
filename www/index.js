@@ -2,15 +2,14 @@ import { Universe } from "wasm-game-of-life";
 
 const canvas = document.getElementById('wasm-canvas');
 const universe = Universe.new();
+// canvas.textContent = universe.render();
 
-const tickButton = document.getElementById('btn-next-tick');
-
-canvas.textContent = universe.render();
-tickButton.addEventListener('click', () => {
-    console.log('click');
-    universe.tick();
-    canvas.textContent = universe.render();
-})
+// const tickButton = document.getElementById('btn-next-tick');
+// tickButton.addEventListener('click', () => {
+//     console.log('click');
+//     universe.tick();
+//     canvas.textContent = universe.render();
+// })
 
 
 const renderLoop = () => {
