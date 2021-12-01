@@ -3,9 +3,8 @@ os: linux
 dist: xenial
 
 cache:
-  directories:
-    - $HOME/.npm
-    - $HOME/.cargo
+  - npm
+  - cargo
 
 branches:
   only:
