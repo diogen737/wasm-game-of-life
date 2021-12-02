@@ -1,7 +1,7 @@
 mod utils;
 
 use wasm_bindgen::prelude::*;
-use rand::prelude::*;
+// use rand::prelude::*;
 use std::fmt;
 
 
@@ -32,12 +32,19 @@ impl Universe {
         let height = 64;
 
         let cells = (0..width * height)
-            .map(|_| {
-                if rand::thread_rng().gen::<f64>() > 0.5 {
+            .map(|i| {
+                // c/4 diagonal initialization
+                if [1, 66, 128, 129, 130].contains(&i) {
                     Cell::Alive
                 } else {
                     Cell::Dead
                 }
+                // random field initialization
+                // if rand::thread_rng().gen::<f64>() > 0.5 {
+                //     Cell::Alive
+                // } else {
+                //     Cell::Dead
+                // }
             })
             .collect();
 
