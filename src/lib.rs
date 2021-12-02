@@ -2,8 +2,12 @@ mod utils;
 
 use wasm_bindgen::prelude::*;
 // use rand::prelude::*;
-use std::fmt;
 
+// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
+// allocator.
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 #[repr(u8)]
@@ -53,10 +57,6 @@ impl Universe {
             height, 
             cells
         }
-    }
-
-    pub fn render(&self) -> String {
-        self.to_string()
     }
 
     pub fn tick(&mut self) {
@@ -127,18 +127,5 @@ impl Universe {
             }
         }
         count
-    }
-}
-
-impl fmt::Display for Universe {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        for line in self.cells.as_slice().chunks(self.width as usize) {
-            for &cell in line {
-                let symbol = if cell == Cell::Alive { '◼' } else { '◻' };
-                write!(fmt, "{}", symbol)?;
-            }
-            write!(fmt, "\n")?;
-        }
-        Ok(())
     }
 }
