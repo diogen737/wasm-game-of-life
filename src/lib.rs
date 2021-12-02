@@ -1,6 +1,7 @@
 mod utils;
 
 use wasm_bindgen::prelude::*;
+use rand::prelude::*;
 use std::fmt;
 
 
@@ -22,14 +23,17 @@ pub struct Universe {
 #[wasm_bindgen]
 impl Universe {
 
+    // =================================================================
+    // Public methods
+    // =================================================================
+
     pub fn new() -> Universe {
         let width = 64;
         let height = 64;
 
         let cells = (0..width * height)
-            .map(|i| {
-                if js_sys::Math::random() > 0.5 {
-                // if i % 2 == 0 || i % 7 == 0 {
+            .map(|_| {
+                if rand::thread_rng().gen::<f64>() > 0.5 {
                     Cell::Alive
                 } else {
                     Cell::Dead
@@ -81,9 +85,25 @@ impl Universe {
         self.cells = next;
     }
 
-    fn get_index(&self, row: u32, column: u32) -> usize {
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    pub fn cells(&self) -> *const Cell {
+        self.cells.as_ptr()
+    }
+
+    pub fn get_index(&self, row: u32, column: u32) -> usize {
         (row * self.width + column) as usize
     }
+
+    // =================================================================
+    // Private service methods
+    // =================================================================
 
     fn live_neighbors_count(&self, row: u32, column: u32) -> u8 {
         let mut count = 0;
@@ -97,7 +117,6 @@ impl Universe {
                 let neighbor_col = (column + delta_col) % self.width;
                 let neighbor_idx = self.get_index(neighbor_row, neighbor_col);
                 count += self.cells[neighbor_idx] as u8;
-
             }
         }
         count
