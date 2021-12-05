@@ -22,4 +22,10 @@ script:
   - cd ${TRAVIS_BUILD_DIR}/www
   - npm i --prefer-offline --skip-audit
   - npm run build
+deploy:
+  provider: pages
+  token: "$GH_TOKEN"
+  local_dir: dist
+  strategy: git
+  skip_cleanup: true
 

@@ -2,6 +2,8 @@
 name = "wasm-game-of-life"
 version = "0.1.0"
 authors = ["Oleg Musienko <diogen737@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/diogen737/wasm-game-of-life/"
 edition = "2021"
 
 [lib]
