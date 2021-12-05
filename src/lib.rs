@@ -96,8 +96,21 @@ impl Universe {
         self.width
     }
 
+    pub fn set_width(&mut self, width: u32) {
+        self.width = width;
+        // Resets all cells to the dead state.
+        self.cells = (0..width * self.height).map(|_| Cell::Dead).collect();
+    }
+
     pub fn height(&self) -> u32 {
         self.height
+    }
+
+    pub fn set_height(&mut self, height: u32) {
+        self.height = height;
+        // Resets all cells to the dead state.
+        self.cells = (0..self.width * height).map(|_| Cell::Dead).collect();
+
     }
 
     pub fn cells(&self) -> *const Cell {
@@ -127,5 +140,20 @@ impl Universe {
             }
         }
         count
+    }
+}
+
+// methods for internal testing, not exposing them to the JS code
+
+impl Universe {
+    pub fn get_cells(&self) -> &[Cell] {
+        &self.cells
+    }
+
+    pub fn set_cells(&mut self, new_cells: &[(u32, u32)]) {
+        for (row, col) in new_cells.iter().cloned() { // .cloned()
+            let idx = self.get_index(row, col);
+            self.cells[idx] = Cell::Alive;
+        }
     }
 }
