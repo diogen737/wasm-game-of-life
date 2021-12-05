@@ -29,6 +29,20 @@
         font-size: 1.125rem;
         line-height: .65;
       }
+
+      .game-controls {
+        position: relative;
+        z-index: 10;
+
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+
+      .game-controls > button {
+        margin-bottom: .5rem;
+        padding: .375rem .75rem;
+      }
     </style>
   </head>
   <body>
@@ -36,9 +50,12 @@
       <canvas id="wasm-canvas"></canvas>
     </div>
 
-    <!-- <div style="text-align: right; z-index: 10; position: relative;">
+    <div class="game-controls">
       <button id="btn-next-tick">Next tick</button>
-    </div> -->
+      <button id="btn-pause">Pause</button>
+      <button id="btn-reset-dead">Reset to all-dead state</button>
+      <button id="btn-reset-random">Reset to a random state</button>
+    </div>
     <script src="./bootstrap.js"></script>
 
     <noscript>

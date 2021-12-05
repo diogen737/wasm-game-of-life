@@ -6,7 +6,7 @@ const GRID_COLOR = '#aaa';
 const DEAD_COLOR = '#fff';
 const ALIVE_COLOR = '#333';
 
-const universe = Universe.new();
+let universe = Universe.new();
 const uWidth = universe.width();
 const uHeight = universe.height();
 
@@ -16,7 +16,7 @@ canvas.width = (CELL_SIZE + 1) * uWidth + 1;
 
 const ctx = canvas.getContext('2d');
 
-
+// Rendering logic
 
 const drawGrid = () => {
     ctx.beginPath();
@@ -66,24 +66,86 @@ const drawCells = () => {
 
 // Automatic ticks and rendering
 
+let frameId = null;
+
 const renderLoop = () => {
-    drawGrid();
-    drawCells();
     universe.tick();
+    drawCells();
     // const now = new Date().getTime();
-    // while(new Date().getTime() < now + 40){}
-    requestAnimationFrame(renderLoop);
+    // while(new Date().getTime() < now + 100){}
+
+    frameId = requestAnimationFrame(renderLoop);
 }
-requestAnimationFrame(renderLoop);
+
+// Game controls
+
+const tickButton = document.getElementById('btn-next-tick');
+const pauseButton = document.getElementById('btn-pause');
+const resetDeadButton = document.getElementById('btn-reset-dead');
+const resetRandomButton = document.getElementById('btn-reset-random');
+
+const isPaused = () => {
+    return frameId === null;
+}
+
+const play = () => {
+    pauseButton.textContent = 'Pause';
+    tickButton.disabled = true;
+    renderLoop();
+}
+
+const pause = () => {
+    pauseButton.textContent = 'Play';
+    cancelAnimationFrame(frameId);
+    tickButton.disabled = false;
+    frameId = null;
+}
+
+// pause/resume ticks
+pauseButton.addEventListener('click', () => {
+    if (isPaused()) {
+        play();
+    } else {
+        pause();
+    }
+});
+
+// manual single tick
+tickButton.addEventListener('click', () => {
+    universe.tick();
+    drawCells();
+});
+
+// toggle a cell that the user has clicked on
+canvas.addEventListener('click', e => {
+    const boundingRect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / boundingRect.width;
+    const scaleY = canvas.height / boundingRect.height;
+
+    const canvasLeft = (e.clientX - boundingRect.left) * scaleX;
+    const canvasTop = (e.clientY - boundingRect.top) * scaleY;
+
+    const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), uHeight - 1);
+    const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), uWidth - 1);
+
+    universe.toggle_cell(row, col);
+    drawCells();
+});
+
+// reset all cells to a dead state
+resetDeadButton.addEventListener('click', () => {
+    // setting width resets all cells to a dead state
+    universe.set_width(uWidth);
+});
+
+// reset universe to a random state
+resetRandomButton.addEventListener('click', () => {
+    universe = Universe.new();
+});
 
 
-// Manual ticks on button click
+// Jumpstart the game
 
-// drawGrid();
-// drawCells();
-// const tickButton = document.getElementById('btn-next-tick');
-// tickButton.addEventListener('click', () => {
-//     universe.tick();
-//     drawGrid();
-//     drawCells();
-// });
+drawGrid();
+drawCells();
+play();

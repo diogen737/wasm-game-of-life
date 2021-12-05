@@ -1,7 +1,7 @@
 mod utils;
 
 use wasm_bindgen::prelude::*;
-// use rand::prelude::*;
+use utils::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -15,6 +15,15 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub enum Cell {
     Dead = 0,
     Alive = 1,
+}
+
+impl Cell {
+    fn toggle(&mut self) {
+        *self = match *self {
+            Cell::Dead => Cell::Alive,
+            Cell::Alive => Cell::Dead
+        };
+    }
 }
 
 #[wasm_bindgen]
@@ -32,23 +41,26 @@ impl Universe {
     // =================================================================
 
     pub fn new() -> Universe {
+        set_panic_hook();
+
         let width = 64;
         let height = 64;
 
         let cells = (0..width * height)
-            .map(|i| {
+            .map(|_| {
+            // .map(|i| {
                 // c/4 diagonal initialization
-                if [1, 66, 128, 129, 130].contains(&i) {
-                    Cell::Alive
-                } else {
-                    Cell::Dead
-                }
-                // random field initialization
-                // if rand::thread_rng().gen::<f64>() > 0.5 {
+                // if [1, 66, 128, 129, 130].contains(&i) {
                 //     Cell::Alive
                 // } else {
                 //     Cell::Dead
                 // }
+                // random field initialization
+                if js_sys::Math::random() > 0.5 {
+                    Cell::Alive
+                } else {
+                    Cell::Dead
+                }
             })
             .collect();
 
@@ -117,15 +129,20 @@ impl Universe {
         self.cells.as_ptr()
     }
 
-    pub fn get_index(&self, row: u32, column: u32) -> usize {
-        (row * self.width + column) as usize
+    pub fn get_index(&self, row: u32, col: u32) -> usize {
+        (row * self.width + col) as usize
+    }
+
+    pub fn toggle_cell(&mut self, row: u32, col: u32) {
+        let idx = self.get_index(row, col);
+        self.cells[idx].toggle();
     }
 
     // =================================================================
     // Private service methods
     // =================================================================
 
-    fn live_neighbors_count(&self, row: u32, column: u32) -> u8 {
+    fn live_neighbors_count(&self, row: u32, col: u32) -> u8 {
         let mut count = 0;
         for delta_row in [self.height - 1, 0, 1].iter().cloned() {
             for delta_col in [self.width - 1, 1, 0].iter().cloned() {
@@ -134,7 +151,7 @@ impl Universe {
                 }
 
                 let neighbor_row = (row + delta_row) % self.height;
-                let neighbor_col = (column + delta_col) % self.width;
+                let neighbor_col = (col + delta_col) % self.width;
                 let neighbor_idx = self.get_index(neighbor_row, neighbor_col);
                 count += self.cells[neighbor_idx] as u8;
             }
