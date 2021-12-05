@@ -11,10 +11,10 @@ const uWidth = universe.width();
 const uHeight = universe.height();
 
 const canvas = document.getElementById('wasm-canvas');
+const ctx = canvas.getContext('2d');
 canvas.height = (CELL_SIZE + 1) * uHeight + 1;
 canvas.width = (CELL_SIZE + 1) * uWidth + 1;
 
-const ctx = canvas.getContext('2d');
 
 // Rendering logic
 
@@ -67,7 +67,6 @@ const drawCells = () => {
 // Automatic ticks and rendering
 
 let frameId = null;
-
 const renderLoop = () => {
     universe.tick();
     drawCells();
@@ -116,8 +115,32 @@ tickButton.addEventListener('click', () => {
     drawCells();
 });
 
+// cell toggle modifiers
+
+const modifiers = {
+    Alt: {
+        enabled: false,
+        method: 'glider',
+    },
+    Shift: {
+        enabled: false,
+        method: 'pulsar',
+    }
+};
+
+document.addEventListener('keydown', e => {
+    const modifier = modifiers[e.key];
+    modifier && (modifier.enabled = true);
+});
+
+document.addEventListener('keyup', e => {
+    const modifier = modifiers[e.key];
+    modifier && (modifier.enabled = false);
+});
+
 // toggle a cell that the user has clicked on
 canvas.addEventListener('click', e => {
+    console.log(Object.values(modifiers).map(m => m.enabled));
     const boundingRect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / boundingRect.width;
     const scaleY = canvas.height / boundingRect.height;
@@ -127,20 +150,36 @@ canvas.addEventListener('click', e => {
 
     const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), uHeight - 1);
     const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), uWidth - 1);
+    console.log(row, col);
 
-    universe.toggle_cell(row, col);
+    // check keyboard modifiers
+    const patternSpawned = Object.values(modifiers).some(m => {
+        if (m.enabled) {
+            universe[`spawn_${m.method}`](row, col);
+            return true;
+        }
+    });
+
+    // if none were pressed do regular cell toggle
+    if (!patternSpawned) {
+        universe.toggle_cell(row, col);
+    }
+
     drawCells();
 });
+
 
 // reset all cells to a dead state
 resetDeadButton.addEventListener('click', () => {
     // setting width resets all cells to a dead state
     universe.set_width(uWidth);
+    drawCells();
 });
 
 // reset universe to a random state
 resetRandomButton.addEventListener('click', () => {
     universe = Universe.new();
+    drawCells();
 });
 
 

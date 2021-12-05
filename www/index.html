@@ -16,11 +16,10 @@
 
       .canvas-container {
         position: absolute;
-        left: 0;
+        right: 300px;
         top: 0;
         height: 100%;
-        width: 100%;
-        z-index: 5;
+        z-index: 10;
 
         display: flex;
         align-items: center;
@@ -32,7 +31,7 @@
 
       .game-controls {
         position: relative;
-        z-index: 10;
+        z-index: 5;
 
         display: flex;
         flex-direction: column;
@@ -53,8 +52,14 @@
     <div class="game-controls">
       <button id="btn-next-tick">Next tick</button>
       <button id="btn-pause">Pause</button>
-      <button id="btn-reset-dead">Reset to all-dead state</button>
-      <button id="btn-reset-random">Reset to a random state</button>
+      <button id="btn-reset-dead">All-dead state</button>
+      <button id="btn-reset-random">Random state</button>
+
+      <ul>
+        <li>Click on a cell toggles it's state</li>
+        <li>Alt + Click - spawn a glider</li>
+        <li>Shift + Click - spawn a pulsar</li>
+      </ul>
     </div>
     <script src="./bootstrap.js"></script>
 

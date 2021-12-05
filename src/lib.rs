@@ -1,7 +1,7 @@
 mod utils;
 
 use wasm_bindgen::prelude::*;
-use utils::*;
+// use utils::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -41,7 +41,7 @@ impl Universe {
     // =================================================================
 
     pub fn new() -> Universe {
-        set_panic_hook();
+        // set_panic_hook();
 
         let width = 64;
         let height = 64;
@@ -122,7 +122,6 @@ impl Universe {
         self.height = height;
         // Resets all cells to the dead state.
         self.cells = (0..self.width * height).map(|_| Cell::Dead).collect();
-
     }
 
     pub fn cells(&self) -> *const Cell {
@@ -136,6 +135,79 @@ impl Universe {
     pub fn toggle_cell(&mut self, row: u32, col: u32) {
         let idx = self.get_index(row, col);
         self.cells[idx].toggle();
+    }
+
+    pub fn spawn_glider(&mut self, row: u32, col: u32) {
+        log!("spawning at {} - {}", row, col);
+        self.set_cells(&[
+            (row, col - 1),
+            (row + 1, col),
+            (row - 1, col + 1),
+            (row, col + 1),
+            (row + 1, col + 1)
+        ]);
+    }
+
+    pub fn spawn_pulsar(&mut self, row: u32, col: u32) {
+        self.set_cells(&[
+            // outer rim
+            (row - 6, col - 4),
+            (row - 6, col - 3),
+            (row - 6, col - 2),
+            (row - 6, col + 2),
+            (row - 6, col + 3),
+            (row - 6, col + 4),
+
+            (row + 6, col - 4),
+            (row + 6, col - 3),
+            (row + 6, col - 2),
+            (row + 6, col + 2),
+            (row + 6, col + 3),
+            (row + 6, col + 4),
+
+            (row - 4, col - 6),
+            (row - 3, col - 6),
+            (row - 2, col - 6),
+            (row - 4, col + 6),
+            (row - 3, col + 6),
+            (row - 2, col + 6),
+
+            (row + 4, col - 6),
+            (row + 3, col - 6),
+            (row + 2, col - 6),
+            (row + 4, col + 6),
+            (row + 3, col + 6),
+            (row + 2, col + 6),
+
+            // inner arms
+            (row - 1, col - 4),
+            (row - 1, col - 3),
+            (row - 1, col - 2),
+            (row - 1, col + 2),
+            (row - 1, col + 3),
+            (row - 1, col + 4),
+
+            (row + 1, col - 4),
+            (row + 1, col - 3),
+            (row + 1, col - 2),
+            (row + 1, col + 2),
+            (row + 1, col + 3),
+            (row + 1, col + 4),
+
+            (row + 4, col - 1),
+            (row + 3, col - 1),
+            (row + 2, col - 1),
+            (row + 4, col + 1),
+            (row + 3, col + 1),
+            (row + 2, col + 1),
+
+            (row - 4, col - 1),
+            (row - 3, col - 1),
+            (row - 2, col - 1),
+            (row - 4, col + 1),
+            (row - 3, col + 1),
+            (row - 2, col + 1),
+        ]);
     }
 
     // =================================================================
@@ -168,7 +240,9 @@ impl Universe {
     }
 
     pub fn set_cells(&mut self, new_cells: &[(u32, u32)]) {
-        for (row, col) in new_cells.iter().cloned() { // .cloned()
+        for (row, col) in new_cells.iter().cloned() {
+            let row = (row + self.height) % self.height;
+            let col = (col + self.width) % self.width;
             let idx = self.get_index(row, col);
             self.cells[idx] = Cell::Alive;
         }
