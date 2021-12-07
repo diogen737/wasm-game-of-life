@@ -142,7 +142,6 @@ document.addEventListener('keyup', e => {
 
 // toggle a cell that the user has clicked on
 canvas.addEventListener('click', e => {
-    console.log(Object.values(modifiers).map(m => m.enabled));
     const boundingRect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / boundingRect.width;
     const scaleY = canvas.height / boundingRect.height;
@@ -152,7 +151,6 @@ canvas.addEventListener('click', e => {
 
     const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), uHeight - 1);
     const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), uWidth - 1);
-    console.log(row, col);
 
     // check keyboard modifiers
     const patternSpawned = Object.values(modifiers).some(m => {

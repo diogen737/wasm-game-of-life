@@ -135,7 +135,6 @@ impl Universe {
     }
 
     pub fn spawn_glider(&mut self, row: u32, col: u32) {
-        log!("spawning at {} - {}", row, col);
         self.set_cells(&[
             (row, col - 1),
             (row + 1, col),
