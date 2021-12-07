@@ -8,7 +8,7 @@ const GRID_COLOR = '#aaa';
 const DEAD_COLOR = '#fff';
 const ALIVE_COLOR = '#333';
 
-let universe = Universe.new();
+let universe = Universe.new(64, 64);
 const uWidth = universe.width();
 const uHeight = universe.height();
 
