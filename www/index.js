@@ -1,5 +1,7 @@
-import { Universe, Cell } from "wasm-game-of-life";
-import { memory } from 'wasm-game-of-life/wasm_game_of_life_bg';
+import styles from './styles/index.css';
+
+import { Universe, Cell } from 'wasm-game-of-life';
+import { memory } from 'wasm-game-of-life/wasm_game_of_life_bg.wasm';
 
 const CELL_SIZE = 10;
 const GRID_COLOR = '#aaa';

@@ -5,44 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>wasm game of life</title>
 
-    <style>
-      *, :after, :before {
-        box-sizing: border-box;
-      }
-
-      body {
-        height: 100%;
-      }
-
-      .canvas-container {
-        position: absolute;
-        right: 300px;
-        top: 0;
-        height: 100%;
-        z-index: 10;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        font-size: 1.125rem;
-        line-height: .65;
-      }
-
-      .game-controls {
-        position: relative;
-        z-index: 5;
-
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-      }
-
-      .game-controls > button {
-        margin-bottom: .5rem;
-        padding: .375rem .75rem;
-      }
-    </style>
   </head>
   <body>
     <div class="canvas-container">
@@ -61,7 +23,6 @@
         <li>Shift + Click - spawn a pulsar</li>
       </ul>
     </div>
-    <script src="./bootstrap.js"></script>
 
     <noscript>
       This page contains webassembly and javascript content, please enable javascript in your browser.
