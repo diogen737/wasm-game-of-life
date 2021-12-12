@@ -8,9 +8,10 @@ const GRID_COLOR = '#aaa';
 const DEAD_COLOR = '#fff';
 const ALIVE_COLOR = '#333';
 
+const canvasContainer = document.querySelector('.canvas-container');
 
-const uWidth = ~~(window.innerWidth / (CELL_SIZE + 1));
-const uHeight = ~~(window.innerHeight / (CELL_SIZE + 1));
+const uWidth = ~~(canvasContainer.clientWidth / (CELL_SIZE + 1));
+const uHeight = ~~(canvasContainer.clientHeight / (CELL_SIZE + 1));
 let universe = Universe.new(uWidth, uHeight);
 
 const canvas = document.getElementById('wasm-canvas');
