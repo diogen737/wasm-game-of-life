@@ -180,7 +180,7 @@ resetDeadButton.addEventListener('click', () => {
 
 // reset universe to a random state
 resetRandomButton.addEventListener('click', () => {
-    universe = Universe.new();
+    universe = Universe.new(uWidth, uHeight);
     drawCells();
 });
 
