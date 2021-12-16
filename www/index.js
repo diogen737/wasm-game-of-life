@@ -50,28 +50,86 @@ const drawCells = () => {
     const cells = new Uint8Array(memory.buffer, cellsPtr, uHeight * uWidth);
 
     ctx.beginPath();
+    // alive cells
+    ctx.fillStyle = ALIVE_COLOR;
     for (let row = 0; row < uHeight; ++row) {
         for (let col = 0; col < uWidth; ++col) {
             const idx = universe.get_index(row, col);
-            ctx.fillStyle = cells[idx] === Cell.Dead
-                ? DEAD_COLOR
-                : ALIVE_COLOR;
+            if (cells[idx] === Cell.Alive) {
+                ctx.fillRect(
+                    (CELL_SIZE + 1) * col + 1,
+                    (CELL_SIZE + 1) * row + 1,
+                    CELL_SIZE,
+                    CELL_SIZE
+                );
+            }
+        }
+    }
 
-            ctx.fillRect(
-                (CELL_SIZE + 1) * col + 1,
-                (CELL_SIZE + 1) * row + 1,
-                CELL_SIZE,
-                CELL_SIZE
-            );
+    // alive cells
+    ctx.fillStyle = DEAD_COLOR;
+    for (let row = 0; row < uHeight; ++row) {
+        for (let col = 0; col < uWidth; ++col) {
+            const idx = universe.get_index(row, col);
+            if (cells[idx] === Cell.Dead) {
+                ctx.fillRect(
+                    (CELL_SIZE + 1) * col + 1,
+                    (CELL_SIZE + 1) * row + 1,
+                    CELL_SIZE,
+                    CELL_SIZE
+                );
+            }
         }
     }
     ctx.stroke();
 }
 
+
+const fps = new class {
+    constructor() {
+        this.fps = document.querySelector('.fps');
+        this.frames = [];
+        this.lastFrameTimeStamp = performance.now();
+    }
+
+    render() {
+        const now = performance.now();
+        const delta = now - this.lastFrameTimeStamp;
+        this.lastFrameTimeStamp = now;
+        const fps = 1 / delta * 1000;
+
+        // save only last 100 readings
+        this.frames.push(fps);
+        if (this.frames.length > 5000) {
+            this.frames.shift();
+        }
+
+        // find min, max, avg fps
+        let min = Infinity;
+        let max = -Infinity;
+        let avg = 0;
+        for (let i = 0; i < this.frames.length; ++i) {
+            const frame = this.frames[i];
+            avg += frame;
+            min = Math.min(frame, min);
+            max = Math.max(frame, max);
+        }
+        avg = avg / this.frames.length;
+
+        this.fps.innerHTML = `
+FPS:<br>
+  Min: ${min.toFixed(2)},<br>
+  Max: ${max.toFixed(2)},<br>
+  Avg: ${avg.toFixed(2)}`;
+    }
+}
+
+
 // Automatic ticks and rendering
 
 let frameId = null;
 const renderLoop = () => {
+    fps.render();
     universe.tick();
     drawCells();
     // const now = new Date().getTime();

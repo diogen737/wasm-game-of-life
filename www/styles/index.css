@@ -16,12 +16,22 @@ body {
     z-index: 10;
 }
 
-.game-controls {
+/* Overlays */
+
+.fps, .game-controls {
     position: absolute;
-    right: 0;
     top: 0;
     z-index: 20;
     background-color: rgba(240, 240, 240, .8);
+}
+
+.fps {
+    left: 0;
+    padding: 20px 0 0 20px;
+}
+
+.game-controls {
+    right: 0;
     padding: 20px 20px 0 0;
 
     display: flex;
