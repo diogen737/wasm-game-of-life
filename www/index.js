@@ -6,10 +6,12 @@ import { memory } from 'wasm-game-of-life/wasm_game_of_life_bg.wasm';
 
 // setup the universe 
 
+const docStyles = getComputedStyle(document.body);
+
+const GRID_COLOR = docStyles.getPropertyValue('--theme-grid');
+const DEAD_COLOR = docStyles.getPropertyValue('--theme-bg');
+const ALIVE_COLOR = docStyles.getPropertyValue('--theme-cell-alive');;
 const CELL_SIZE = 5;
-const GRID_COLOR = '#aaa';
-const DEAD_COLOR = '#fff';
-const ALIVE_COLOR = '#333';
 
 const canvasContainer = document.querySelector('.canvas-container');
 
@@ -134,9 +136,9 @@ const fps = new class {
 
         this.fps.innerHTML = `
 FPS:<br>
-  Min: ${min.toFixed(2)},<br>
-  Max: ${max.toFixed(2)},<br>
-  Avg: ${avg.toFixed(2)}`;
+&nbsp;&nbsp;Min: ${min.toFixed(2)}<br>
+&nbsp;&nbsp;Max: ${max.toFixed(2)}<br>
+&nbsp;&nbsp;Avg: ${avg.toFixed(2)}`;
     }
 }
 

@@ -8,6 +8,14 @@ body {
     height: 100vh;
     margin: 0;
     padding: 14px;
+
+    font-family: 'Roboto', sans-serif;
+
+    --theme-bg: #333;
+    --theme-grid: #999;
+    --theme-cell-alive: #eee;
+
+    background-color: var(--theme-bg);
 }
 
 .canvas-container {
