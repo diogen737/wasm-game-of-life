@@ -3,7 +3,10 @@ import styles from './styles/index.css';
 import { Universe, Cell } from 'wasm-game-of-life';
 import { memory } from 'wasm-game-of-life/wasm_game_of_life_bg.wasm';
 
-const CELL_SIZE = 10;
+
+// setup the universe 
+
+const CELL_SIZE = 5;
 const GRID_COLOR = '#aaa';
 const DEAD_COLOR = '#fff';
 const ALIVE_COLOR = '#333';
@@ -11,7 +14,10 @@ const ALIVE_COLOR = '#333';
 const canvasContainer = document.querySelector('.canvas-container');
 
 const uWidth = ~~(canvasContainer.clientWidth / (CELL_SIZE + 1));
+// const uWidth = 122;
 const uHeight = ~~(canvasContainer.clientHeight / (CELL_SIZE + 1));
+// const uHeight = 122;
+
 let universe = Universe.new(uWidth, uHeight);
 
 const canvas = document.getElementById('wasm-canvas');
@@ -20,7 +26,7 @@ canvas.height = (CELL_SIZE + 1) * uHeight + 1;
 canvas.width = (CELL_SIZE + 1) * uWidth + 1;
 
 
-// Rendering logic
+// rendering logic
 
 const drawGrid = () => {
     ctx.beginPath();
@@ -46,41 +52,53 @@ const drawGrid = () => {
 }
 
 const drawCells = () => {
+    // get all cells for reference
     const cellsPtr = universe.cells();
     const cells = new Uint8Array(memory.buffer, cellsPtr, uHeight * uWidth);
 
-    ctx.beginPath();
-    // alive cells
-    ctx.fillStyle = ALIVE_COLOR;
-    for (let row = 0; row < uHeight; ++row) {
-        for (let col = 0; col < uWidth; ++col) {
-            const idx = universe.get_index(row, col);
-            if (cells[idx] === Cell.Alive) {
-                ctx.fillRect(
-                    (CELL_SIZE + 1) * col + 1,
-                    (CELL_SIZE + 1) * row + 1,
-                    CELL_SIZE,
-                    CELL_SIZE
-                );
-            }
+    // get cells diff from previous tick
+    const cellsDiffPtr = universe.cells_diff();
+    const cellsDiffLen = universe.cells_diff_len();
+    const cellsDiff = new Uint32Array(memory.buffer, cellsDiffPtr, cellsDiffLen);
+    console.log(cellsDiffLen)
+
+    // separate alive & dead cells for rendering optimization (fillStyle takes a lot of time)
+    const aliveCells = [];
+    const deadCells = [];
+    for (let idx of cellsDiff) {
+        const col = Math.floor(idx % uWidth);
+        const row = Math.floor(idx / uWidth);
+        if (cells[idx] === Cell.Alive) {
+            aliveCells.push([col, row]);
+        } else {
+            deadCells.push([col, row]);
         }
     }
 
+    ctx.beginPath();
+
     // alive cells
-    ctx.fillStyle = DEAD_COLOR;
-    for (let row = 0; row < uHeight; ++row) {
-        for (let col = 0; col < uWidth; ++col) {
-            const idx = universe.get_index(row, col);
-            if (cells[idx] === Cell.Dead) {
-                ctx.fillRect(
-                    (CELL_SIZE + 1) * col + 1,
-                    (CELL_SIZE + 1) * row + 1,
-                    CELL_SIZE,
-                    CELL_SIZE
-                );
-            }
-        }
+    ctx.fillStyle = ALIVE_COLOR;
+    for (let [col, row] of aliveCells) {
+        ctx.fillRect(
+            (CELL_SIZE + 1) * col + 1,
+            (CELL_SIZE + 1) * row + 1,
+            CELL_SIZE,
+            CELL_SIZE
+        );
     }
+
+    // dead cells
+    ctx.fillStyle = DEAD_COLOR;
+    for (let [col, row] of deadCells) {
+        ctx.fillRect(
+            (CELL_SIZE + 1) * col + 1,
+            (CELL_SIZE + 1) * row + 1,
+            CELL_SIZE,
+            CELL_SIZE
+        );
+    }
+
     ctx.stroke();
 }
 
@@ -88,6 +106,7 @@ const drawCells = () => {
 const fps = new class {
     constructor() {
         this.fps = document.querySelector('.fps');
+        this.buffer = 2000;
         this.frames = [];
         this.lastFrameTimeStamp = performance.now();
     }
@@ -98,9 +117,9 @@ const fps = new class {
         this.lastFrameTimeStamp = now;
         const fps = 1 / delta * 1000;
 
-        // save only last 100 readings
+        // save only last N readings
         this.frames.push(fps);
-        if (this.frames.length > 5000) {
+        if (this.frames.length > this.buffer) {
             this.frames.shift();
         }
 
@@ -125,26 +144,29 @@ FPS:<br>
 }
 
 
-// Automatic ticks and rendering
+// automatic ticks and rendering
+
+const render = () => {
+    drawGrid();
+    drawCells();
+}
 
 let frameId = null;
 const renderLoop = () => {
     fps.render();
     universe.tick();
-    drawCells();
-    // const now = new Date().getTime();
-    // while(new Date().getTime() < now + 100){}
-
+    render();
     frameId = requestAnimationFrame(renderLoop);
 }
 
-// Game controls
+// universe controls
 
 const tickButton = document.getElementById('btn-next-tick');
 const pauseButton = document.getElementById('btn-pause');
 const resetDeadButton = document.getElementById('btn-reset-dead');
 const resetRandomButton = document.getElementById('btn-reset-random');
 
+// pause/resume ticks
 const isPaused = () => {
     return frameId === null;
 }
@@ -162,7 +184,6 @@ const pause = () => {
     frameId = null;
 }
 
-// pause/resume ticks
 pauseButton.addEventListener('click', () => {
     if (isPaused()) {
         play();
@@ -174,7 +195,7 @@ pauseButton.addEventListener('click', () => {
 // manual single tick
 tickButton.addEventListener('click', () => {
     universe.tick();
-    drawCells();
+    render();
 });
 
 // cell toggle modifiers
@@ -225,7 +246,7 @@ canvas.addEventListener('click', e => {
         universe.toggle_cell(row, col);
     }
 
-    drawCells();
+    render();
 });
 
 
@@ -233,18 +254,17 @@ canvas.addEventListener('click', e => {
 resetDeadButton.addEventListener('click', () => {
     // setting width resets all cells to a dead state
     universe.set_width(uWidth);
-    drawCells();
+    render();
 });
 
 // reset universe to a random state
 resetRandomButton.addEventListener('click', () => {
     universe = Universe.new(uWidth, uHeight);
-    drawCells();
+    render();
 });
 
 
-// Jumpstart the game
+// jumpstart the universe
 
-drawGrid();
-drawCells();
+render();
 play();
