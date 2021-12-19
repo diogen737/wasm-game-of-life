@@ -108,18 +108,6 @@ impl Universe {
         }
     }
 
-    pub fn set_width(&mut self, width: u32) {
-        self.width = width;
-        // reset all cells to the dead state
-        self.cells = (0..width * self.height).map(|_| Cell::Dead).collect();
-    }
-
-    pub fn set_height(&mut self, height: u32) {
-        self.height = height;
-        // reset all cells to the dead state
-        self.cells = (0..self.width * height).map(|_| Cell::Dead).collect();
-    }
-
     pub fn cells(&self) -> *const Cell {
         self.cells.as_ptr()
     }
@@ -134,83 +122,6 @@ impl Universe {
 
     pub fn get_index(&self, row: u32, col: u32) -> usize {
         (row * self.width + col) as usize
-    }
-
-    pub fn toggle_cell(&mut self, row: u32, col: u32) {
-        let idx = self.get_index(row, col);
-        self.cells[idx].toggle();
-    }
-
-    pub fn spawn_glider(&mut self, row: u32, col: u32) {
-        self.set_cells(&[
-            (row, col - 1),
-            (row + 1, col),
-            (row - 1, col + 1),
-            (row, col + 1),
-            (row + 1, col + 1)
-        ]);
-    }
-
-    pub fn spawn_pulsar(&mut self, row: u32, col: u32) {
-        self.set_cells(&[
-            // outer rim
-            (row - 6, col - 4),
-            (row - 6, col - 3),
-            (row - 6, col - 2),
-            (row - 6, col + 2),
-            (row - 6, col + 3),
-            (row - 6, col + 4),
-
-            (row + 6, col - 4),
-            (row + 6, col - 3),
-            (row + 6, col - 2),
-            (row + 6, col + 2),
-            (row + 6, col + 3),
-            (row + 6, col + 4),
-
-            (row - 4, col - 6),
-            (row - 3, col - 6),
-            (row - 2, col - 6),
-            (row - 4, col + 6),
-            (row - 3, col + 6),
-            (row - 2, col + 6),
-
-            (row + 4, col - 6),
-            (row + 3, col - 6),
-            (row + 2, col - 6),
-            (row + 4, col + 6),
-            (row + 3, col + 6),
-            (row + 2, col + 6),
-
-            // inner arms
-            (row - 1, col - 4),
-            (row - 1, col - 3),
-            (row - 1, col - 2),
-            (row - 1, col + 2),
-            (row - 1, col + 3),
-            (row - 1, col + 4),
-
-            (row + 1, col - 4),
-            (row + 1, col - 3),
-            (row + 1, col - 2),
-            (row + 1, col + 2),
-            (row + 1, col + 3),
-            (row + 1, col + 4),
-
-            (row + 4, col - 1),
-            (row + 3, col - 1),
-            (row + 2, col - 1),
-            (row + 4, col + 1),
-            (row + 3, col + 1),
-            (row + 2, col + 1),
-
-            (row - 4, col - 1),
-            (row - 3, col - 1),
-            (row - 2, col - 1),
-            (row - 4, col + 1),
-            (row - 3, col + 1),
-            (row - 2, col + 1),
-        ]);
     }
 
     /**
@@ -272,8 +183,131 @@ impl Universe {
     }
 }
 
-// methods for internal testing, not exposing them to the JS code
+/**
+ * explicit changes in the universe
+ */
+#[wasm_bindgen]
+impl Universe {
+    /**
+     * toggle particular cell
+     */
+    pub fn toggle_cell(&mut self, row: u32, col: u32) {
+        let idx = self.get_index(row, col);
+        self.cells[idx].toggle();
+        self.cells_diff.push(idx);
+    }
 
+    /**
+     * reset all cell to dead
+     */
+    pub fn set_all_dead(&mut self) {
+        self.cells_diff.clear();
+        for (i, cell) in self.cells.iter_mut().enumerate() {
+            *cell = Cell::Dead;
+            self.cells_diff.push(i);
+        }
+    }
+
+    /**
+     * set each cell to a random state
+     */
+    pub fn set_random(&mut self) {
+        self.cells_diff.clear();
+        for (i, cell) in self.cells.iter_mut().enumerate() {
+            *cell = if js_sys::Math::random() > 0.5 {
+                Cell::Alive
+            } else {
+                Cell::Dead
+            };
+            self.cells_diff.push(i);
+        }
+    }
+
+    /**
+     * c/4 diagonal glider
+     * https://www.conwaylife.com/wiki/C/4_diagonal
+     */
+    pub fn spawn_glider(&mut self, row: u32, col: u32) {
+        self.set_cells(&[
+            (row, col - 1),
+            (row + 1, col),
+            (row - 1, col + 1),
+            (row, col + 1),
+            (row + 1, col + 1)
+        ]);
+    }
+
+    /**
+     * pulsar
+     * https://www.conwaylife.com/wiki/Pulsar
+     */
+    pub fn spawn_pulsar(&mut self, row: u32, col: u32) {
+        self.set_cells(&[
+            // outer rim
+            (row - 6, col - 4),
+            (row - 6, col - 3),
+            (row - 6, col - 2),
+            (row - 6, col + 2),
+            (row - 6, col + 3),
+            (row - 6, col + 4),
+
+            (row + 6, col - 4),
+            (row + 6, col - 3),
+            (row + 6, col - 2),
+            (row + 6, col + 2),
+            (row + 6, col + 3),
+            (row + 6, col + 4),
+
+            (row - 4, col - 6),
+            (row - 3, col - 6),
+            (row - 2, col - 6),
+            (row - 4, col + 6),
+            (row - 3, col + 6),
+            (row - 2, col + 6),
+
+            (row + 4, col - 6),
+            (row + 3, col - 6),
+            (row + 2, col - 6),
+            (row + 4, col + 6),
+            (row + 3, col + 6),
+            (row + 2, col + 6),
+
+            // inner arms
+            (row - 1, col - 4),
+            (row - 1, col - 3),
+            (row - 1, col - 2),
+            (row - 1, col + 2),
+            (row - 1, col + 3),
+            (row - 1, col + 4),
+
+            (row + 1, col - 4),
+            (row + 1, col - 3),
+            (row + 1, col - 2),
+            (row + 1, col + 2),
+            (row + 1, col + 3),
+            (row + 1, col + 4),
+
+            (row + 4, col - 1),
+            (row + 3, col - 1),
+            (row + 2, col - 1),
+            (row + 4, col + 1),
+            (row + 3, col + 1),
+            (row + 2, col + 1),
+
+            (row - 4, col - 1),
+            (row - 3, col - 1),
+            (row - 2, col - 1),
+            (row - 4, col + 1),
+            (row - 3, col + 1),
+            (row - 2, col + 1),
+        ]);
+    }
+}
+
+
+/**
+ * methods for internal testing, not exposing them to the JS code
+ */
 impl Universe {
     pub fn get_cells(&self) -> &[Cell] {
         &self.cells

@@ -14,11 +14,9 @@ const ALIVE_COLOR = '#333';
 const canvasContainer = document.querySelector('.canvas-container');
 
 const uWidth = ~~(canvasContainer.clientWidth / (CELL_SIZE + 1));
-// const uWidth = 122;
+// const uWidth = 300;
 const uHeight = ~~(canvasContainer.clientHeight / (CELL_SIZE + 1));
-// const uHeight = 122;
-
-let universe = Universe.new(uWidth, uHeight);
+// const uHeight = 300;
 
 const canvas = document.getElementById('wasm-canvas');
 const ctx = canvas.getContext('2d');
@@ -60,7 +58,6 @@ const drawCells = () => {
     const cellsDiffPtr = universe.cells_diff();
     const cellsDiffLen = universe.cells_diff_len();
     const cellsDiff = new Uint32Array(memory.buffer, cellsDiffPtr, cellsDiffLen);
-    console.log(cellsDiffLen)
 
     // separate alive & dead cells for rendering optimization (fillStyle takes a lot of time)
     const aliveCells = [];
@@ -253,18 +250,21 @@ canvas.addEventListener('click', e => {
 // reset all cells to a dead state
 resetDeadButton.addEventListener('click', () => {
     // setting width resets all cells to a dead state
-    universe.set_width(uWidth);
+    universe.set_all_dead();
     render();
 });
 
 // reset universe to a random state
 resetRandomButton.addEventListener('click', () => {
-    universe = Universe.new(uWidth, uHeight);
+    universe.set_random();
     render();
 });
 
 
 // jumpstart the universe
+
+let universe = Universe.new(uWidth, uHeight);
+universe.set_random();
 
 render();
 play();
