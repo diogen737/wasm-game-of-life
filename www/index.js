@@ -32,16 +32,16 @@ const drawGrid = () => {
 
     // vertical lines
     for (let i = 0; i <= uWidth; ++i) {
-        const targetX = (CELL_SIZE + 1) * i + 1;
-        const targetY = (CELL_SIZE + 1) * uHeight + 1;
+        const targetX = (CELL_SIZE + 1) * i + .5;
+        const targetY = (CELL_SIZE + 1) * uHeight + .5;
         ctx.moveTo(targetX, 0);
         ctx.lineTo(targetX, targetY);
     }
 
     // horizontal lines
     for (let i = 0; i <= uHeight; ++i) {
-        const targetX = (CELL_SIZE + 1) * uWidth + 1;
-        const targetY = (CELL_SIZE + 1) * i + 1;
+        const targetX = (CELL_SIZE + 1) * uWidth + .5;
+        const targetY = (CELL_SIZE + 1) * i + .5;
         ctx.moveTo(0, targetY);
         ctx.lineTo(targetX, targetY);
     }
@@ -143,16 +143,11 @@ FPS:<br>
 
 // automatic ticks and rendering
 
-const render = () => {
-    drawGrid();
-    drawCells();
-}
-
 let frameId = null;
 const renderLoop = () => {
     fps.render();
     universe.tick();
-    render();
+    drawCells();
     frameId = requestAnimationFrame(renderLoop);
 }
 
@@ -192,7 +187,7 @@ pauseButton.addEventListener('click', () => {
 // manual single tick
 tickButton.addEventListener('click', () => {
     universe.tick();
-    render();
+    drawCells();
 });
 
 // cell toggle modifiers
@@ -243,7 +238,7 @@ canvas.addEventListener('click', e => {
         universe.toggle_cell(row, col);
     }
 
-    render();
+    drawCells();
 });
 
 
@@ -251,20 +246,22 @@ canvas.addEventListener('click', e => {
 resetDeadButton.addEventListener('click', () => {
     // setting width resets all cells to a dead state
     universe.set_all_dead();
-    render();
+    drawCells();
 });
 
 // reset universe to a random state
 resetRandomButton.addEventListener('click', () => {
     universe.set_random();
-    render();
+    drawCells();
 });
 
 
-// jumpstart the universe
+// create and jumpstart the universe
 
 let universe = Universe.new(uWidth, uHeight);
+// universe.spawn_glider(40, 40);
 universe.set_random();
 
-render();
+drawGrid();
+drawCells();
 play();
