@@ -6,10 +6,9 @@ const commonConfig = require('./webpack.config.common');
 
 module.exports = merge(commonConfig, {
   mode: 'production',
-  plugins: [
-    new MiniCssExtractPlugin(),
-    new CssMinimizerPlugin(),
-  ],
+  output: {
+    clean: true
+  },
   module: {
     rules: [
       {
@@ -21,4 +20,10 @@ module.exports = merge(commonConfig, {
       }
     ]
   },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name].[fullhash].css',
+    }),
+    new CssMinimizerPlugin(),
+  ],
 });

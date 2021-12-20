@@ -1,4 +1,18 @@
-import styles from './styles/index.css';
+// ui imports 
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './styles/index.css';
+
+import 'bootstrap/js/dist/offcanvas';
+
+/**
+ * TODO:
+ * - buttons for clear/random state
+ * - toggle for wrap/limited boundaries
+ * - offcanvas for the game's rules
+ * - double tap on mobile for predefined counstructs
+ */
+
+// game-of-life imports
 
 import { Universe, Cell } from 'wasm-game-of-life';
 import { memory } from 'wasm-game-of-life/wasm_game_of_life_bg.wasm';
@@ -12,7 +26,7 @@ const docStyles = getComputedStyle(document.body);
 const GRID_COLOR = docStyles.getPropertyValue('--theme-grid');
 const DEAD_COLOR = docStyles.getPropertyValue('--theme-bg');
 const ALIVE_COLOR = docStyles.getPropertyValue('--theme-cell-alive');;
-const CELL_SIZE = 5;
+const CELL_SIZE = 7;
 
 const canvasContainer = document.querySelector('.canvas-container');
 
@@ -117,7 +131,7 @@ const renderLoop = () => {
 
 // universe controls
 
-const tickButton = document.getElementById('btn-next-tick');
+const tickButton = document.getElementById('btn-tick');
 const pauseButton = document.getElementById('btn-pause');
 const resetDeadButton = document.getElementById('btn-reset-dead');
 const resetRandomButton = document.getElementById('btn-reset-random');
@@ -128,13 +142,13 @@ const isPaused = () => {
 }
 
 const play = () => {
-    pauseButton.textContent = 'Pause';
+    pauseButton.querySelector('img').setAttribute('src', '/assets/pause.svg');
     tickButton.disabled = true;
     renderLoop();
 }
 
 const pause = () => {
-    pauseButton.textContent = 'Play';
+    pauseButton.querySelector('img').setAttribute('src', '/assets/play.svg');
     cancelAnimationFrame(frameId);
     tickButton.disabled = false;
     frameId = null;

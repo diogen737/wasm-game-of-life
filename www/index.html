@@ -29,17 +29,55 @@
 
     <div class="fps"></div>
 
-    <div class="game-controls">
-      <button id="btn-next-tick">Next tick</button>
-      <button id="btn-pause">Pause</button>
-      <button id="btn-reset-dead">All-dead state</button>
-      <button id="btn-reset-random">Random state</button>
+    <div class="d-flex flex-column position-absolute bottom-0 end-0 m-2">
+      <!-- <button class="btn btn-success" id="btn-next-tick">Next tick</button>
+      <button class="btn btn-success" id="btn-pause">Pause</button>
+      <button class="btn btn-success" id="btn-reset-dead">All-dead state</button>
+      <button class="btn btn-success" id="btn-reset-random">Random state</button>
 
       <ul>
         <li>Click on a cell toggles it's state</li>
         <li>Alt + Click - spawn a glider</li>
         <li>Shift + Click - spawn a pulsar</li>
-      </ul>
+      </ul> -->
+      <button class="btn btn-primary rounded-circle p-2 mb-2" id="btn-tick">
+        <img src="/assets/tick.svg" alt="Tick" title="Tick">
+      </button>
+      <button class="btn btn-primary rounded-circle p-2 mb-2" id="btn-pause">
+        <img src="/assets/pause.svg" alt="Pause/resume" title="Pause/resume">
+      </button>
+      <button class="btn btn-primary rounded-circle p-2 mb-2" id="btn-reset-dead">
+        <img src="/assets/dead.svg" alt="All-dead state" title="All-dead state">
+      </button>
+      <button class="btn btn-primary rounded-circle p-2 mb-2" id="btn-reset-random">
+        <img src="/assets/random.svg" alt="Random state" title="Random state">
+      </button>
+      <button class="btn btn-primary rounded-circle p-2" data-bs-toggle="offcanvas" data-bs-target="#offcanvasControls" aria-controls="offcanvasControls">
+        <img src="/assets/cog.svg" alt="Settings" title="Settings">
+      </button>
+    </div>
+
+    
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasControls" aria-labelledby="offcanvasControlsLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasControlsLabel">Offcanvas</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div>
+          Some text as placeholder. In real life you can have the elements you have chosen. Like, text, images, lists, etc.
+        </div>
+        <div class="dropdown mt-3">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+            Dropdown button
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <li><a class="dropdown-item" href="#">Action</a></li>
+            <li><a class="dropdown-item" href="#">Another action</a></li>
+            <li><a class="dropdown-item" href="#">Something else here</a></li>
+          </ul>
+        </div>
+      </div>
     </div>
 
     <noscript>

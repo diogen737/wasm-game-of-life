@@ -1,4 +1,5 @@
-const HTMLWebpackPlugin = require('html-webpack-plugin');
+const HTMLPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 const path = require('path');
 
 module.exports = {
@@ -8,10 +9,15 @@ module.exports = {
     filename: 'bootstrap.[fullhash].js',
   },
   plugins: [
-    new HTMLWebpackPlugin({
+    new HTMLPlugin({
       template: path.resolve(__dirname, 'index.html'),
       filename: 'index.html',
     }),
+    new CopyPlugin({
+      patterns: [
+        { from: 'assets', to: 'assets' }
+      ]
+    })
   ],
   experiments: {
     syncWebAssembly: true,

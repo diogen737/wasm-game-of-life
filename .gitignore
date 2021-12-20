@@ -6,3 +6,4 @@ pkg/
 wasm-pack.log
 
 .vscode/
+.DS_Store
