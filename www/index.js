@@ -7,8 +7,7 @@ import 'bootstrap/js/dist/offcanvas';
 /**
  * TODO:
  * - toggle for wrap/limited boundaries
- * - offcanvas for the game's rules
- * - double tap on mobile for predefined counstructs
+ * - proper universe resize
  */
 
 import { UniverseRenderer } from './components/universe-renderer';
@@ -60,8 +59,18 @@ tickButton.addEventListener('click', () => {
     renderer.tick();
 });
 
-// cell toggles
+// reset universe to dead state
+resetDeadButton.addEventListener('click', () => {
+    renderer.set_all_dead();
+});
 
+// reset universe to a random state
+resetRandomButton.addEventListener('click', () => {
+    renderer.set_random();
+});
+
+
+// pattern-spawning modifiers
 const modifiers = {
     Alt: {
         enabled: false,
@@ -73,18 +82,57 @@ const modifiers = {
     }
 };
 
+const clearModifiers = () => {
+    Object.values(modifiers).forEach(m => m.enabled = false);
+}
+
 document.addEventListener('keydown', e => {
     const modifier = modifiers[e.key];
     modifier && (modifier.enabled = true);
 });
 
 document.addEventListener('keyup', e => {
-    const modifier = modifiers[e.key];
-    modifier && (modifier.enabled = false);
+    clearModifiers();
 });
 
-// toggle a cell that the user has clicked on
+
+const TAP_WINDOW = 350;
+let tapCount = 0;
+let lastEvent;
 document.addEventListener('click', e => {
+    // handle multiple taps
+    if (e.pointerType === 'touch') {
+        if (tapCount === 0) {
+            // open tap window
+            setTimeout(() => {
+                // make sure only one modifier is set
+                clearModifiers();
+                // map the number of taps to the keyboard modifiers
+                switch (tapCount) {
+                    case 2:
+                        modifiers.Alt.enabled = true;
+                        break;
+                    case 3:
+                        modifiers.Shift.enabled = true;
+                        break;
+                }
+
+                fireClick(lastEvent);
+                // cleanup before closing tap window
+                clearModifiers();
+                tapCount = 0;
+            }, TAP_WINDOW);
+        }
+
+        tapCount += 1;
+        lastEvent = e;
+    } else {
+        fireClick(e);
+    }
+});
+
+const fireClick = (e) => {
+    // take first enambled modifier
     let modifier;
     for (let m of Object.values(modifiers)) {
         if (m.enabled) {
@@ -93,18 +141,7 @@ document.addEventListener('click', e => {
     }
 
     renderer.handle_canvas_click(e, modifier);
-});
-
-
-// reset all cells to a dead state
-resetDeadButton.addEventListener('click', () => {
-    renderer.set_all_dead();
-});
-
-// reset universe to a random state
-resetRandomButton.addEventListener('click', () => {
-    renderer.set_random();
-});
+}
 
 
 // create and jumpstart the universe
