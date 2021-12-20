@@ -30,3 +30,12 @@ body {
     padding: .5rem;
     background-color: rgba(240, 240, 240, .8);
 }
+
+.offcanvas-end {
+    width: 350px;
+}
+
+.offcanvas-body .list-group {
+    font-size: .75rem;
+}
+
