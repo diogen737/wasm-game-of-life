@@ -1,109 +1,51 @@
-import styles from './styles/index.css';
+// ui imports 
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './styles/index.css';
 
-import { Universe, Cell } from 'wasm-game-of-life';
-import { memory } from 'wasm-game-of-life/wasm_game_of_life_bg.wasm';
+import 'bootstrap/js/dist/offcanvas';
 
-const CELL_SIZE = 10;
-const GRID_COLOR = '#aaa';
-const DEAD_COLOR = '#fff';
-const ALIVE_COLOR = '#333';
+/**
+ * TODO:
+ * - toggle for wrap/limited boundaries
+ * - proper universe resize
+ */
 
-
-const uWidth = ~~(window.innerWidth / (CELL_SIZE + 1));
-const uHeight = ~~(window.innerHeight / (CELL_SIZE + 1));
-let universe = Universe.new(uWidth, uHeight);
-
-const canvas = document.getElementById('wasm-canvas');
-const ctx = canvas.getContext('2d');
-canvas.height = (CELL_SIZE + 1) * uHeight + 1;
-canvas.width = (CELL_SIZE + 1) * uWidth + 1;
+import { UniverseRenderer } from './components/universe-renderer';
 
 
-// Rendering logic
-
-const drawGrid = () => {
-    ctx.beginPath();
-    ctx.strokeStyle = GRID_COLOR;
-
-    // vertical lines
-    for (let i = 0; i <= uWidth; ++i) {
-        const targetX = (CELL_SIZE + 1) * i + 1;
-        const targetY = (CELL_SIZE + 1) * uHeight + 1;
-        ctx.moveTo(targetX, 0);
-        ctx.lineTo(targetX, targetY);
-    }
-
-    // horizontal lines
-    for (let i = 0; i <= uHeight; ++i) {
-        const targetX = (CELL_SIZE + 1) * uWidth + 1;
-        const targetY = (CELL_SIZE + 1) * i + 1;
-        ctx.moveTo(0, targetY);
-        ctx.lineTo(targetX, targetY);
-    }
-
-    ctx.stroke();
-}
-
-const drawCells = () => {
-    const cellsPtr = universe.cells();
-    const cells = new Uint8Array(memory.buffer, cellsPtr, uHeight * uWidth);
-
-    ctx.beginPath();
-    for (let row = 0; row < uHeight; ++row) {
-        for (let col = 0; col < uWidth; ++col) {
-            const idx = universe.get_index(row, col);
-            ctx.fillStyle = cells[idx] === Cell.Dead
-                ? DEAD_COLOR
-                : ALIVE_COLOR;
-
-            ctx.fillRect(
-                (CELL_SIZE + 1) * col + 1,
-                (CELL_SIZE + 1) * row + 1,
-                CELL_SIZE,
-                CELL_SIZE
-            );
-        }
-    }
-    ctx.stroke();
-}
-
-// Automatic ticks and rendering
+// automatic ticks and rendering
 
 let frameId = null;
 const renderLoop = () => {
-    universe.tick();
-    drawCells();
-    // const now = new Date().getTime();
-    // while(new Date().getTime() < now + 100){}
-
+    renderer.render();
     frameId = requestAnimationFrame(renderLoop);
 }
 
-// Game controls
+// universe controls
 
-const tickButton = document.getElementById('btn-next-tick');
+const tickButton = document.getElementById('btn-tick');
 const pauseButton = document.getElementById('btn-pause');
 const resetDeadButton = document.getElementById('btn-reset-dead');
 const resetRandomButton = document.getElementById('btn-reset-random');
 
+// pause/resume ticks
 const isPaused = () => {
     return frameId === null;
 }
 
 const play = () => {
-    pauseButton.textContent = 'Pause';
+    pauseButton.querySelector('img').setAttribute('src', '/assets/pause.svg');
     tickButton.disabled = true;
     renderLoop();
 }
 
 const pause = () => {
-    pauseButton.textContent = 'Play';
+    pauseButton.querySelector('img').setAttribute('src', '/assets/play.svg');
     cancelAnimationFrame(frameId);
     tickButton.disabled = false;
     frameId = null;
 }
 
-// pause/resume ticks
 pauseButton.addEventListener('click', () => {
     if (isPaused()) {
         play();
@@ -114,12 +56,21 @@ pauseButton.addEventListener('click', () => {
 
 // manual single tick
 tickButton.addEventListener('click', () => {
-    universe.tick();
-    drawCells();
+    renderer.tick();
 });
 
-// cell toggle modifiers
+// reset universe to dead state
+resetDeadButton.addEventListener('click', () => {
+    renderer.set_all_dead();
+});
 
+// reset universe to a random state
+resetRandomButton.addEventListener('click', () => {
+    renderer.set_random();
+});
+
+
+// pattern-spawning modifiers
 const modifiers = {
     Alt: {
         enabled: false,
@@ -131,61 +82,68 @@ const modifiers = {
     }
 };
 
+const clearModifiers = () => {
+    Object.values(modifiers).forEach(m => m.enabled = false);
+}
+
 document.addEventListener('keydown', e => {
     const modifier = modifiers[e.key];
     modifier && (modifier.enabled = true);
 });
 
 document.addEventListener('keyup', e => {
-    const modifier = modifiers[e.key];
-    modifier && (modifier.enabled = false);
+    clearModifiers();
 });
 
-// toggle a cell that the user has clicked on
-canvas.addEventListener('click', e => {
-    const boundingRect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / boundingRect.width;
-    const scaleY = canvas.height / boundingRect.height;
 
-    const canvasLeft = (e.clientX - boundingRect.left) * scaleX;
-    const canvasTop = (e.clientY - boundingRect.top) * scaleY;
+const TAP_WINDOW = 350;
+let tapCount = 0;
+let lastEvent;
+document.addEventListener('click', e => {
+    // handle multiple taps
+    if (e.pointerType === 'touch') {
+        if (tapCount === 0) {
+            // open tap window
+            setTimeout(() => {
+                // make sure only one modifier is set
+                clearModifiers();
+                // map the number of taps to the keyboard modifiers
+                switch (tapCount) {
+                    case 2:
+                        modifiers.Alt.enabled = true;
+                        break;
+                    case 3:
+                        modifiers.Shift.enabled = true;
+                        break;
+                }
 
-    const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), uHeight - 1);
-    const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), uWidth - 1);
-
-    // check keyboard modifiers
-    const patternSpawned = Object.values(modifiers).some(m => {
-        if (m.enabled) {
-            universe[`spawn_${m.method}`](row, col);
-            return true;
+                fireClick(lastEvent);
+                // cleanup before closing tap window
+                clearModifiers();
+                tapCount = 0;
+            }, TAP_WINDOW);
         }
-    });
 
-    // if none were pressed do regular cell toggle
-    if (!patternSpawned) {
-        universe.toggle_cell(row, col);
+        tapCount += 1;
+        lastEvent = e;
+    } else {
+        fireClick(e);
+    }
+});
+
+const fireClick = (e) => {
+    // take first enambled modifier
+    let modifier;
+    for (let m of Object.values(modifiers)) {
+        if (m.enabled) {
+            modifier = m.method;
+        }
     }
 
-    drawCells();
-});
+    renderer.handle_canvas_click(e, modifier);
+}
 
 
-// reset all cells to a dead state
-resetDeadButton.addEventListener('click', () => {
-    // setting width resets all cells to a dead state
-    universe.set_width(uWidth);
-    drawCells();
-});
-
-// reset universe to a random state
-resetRandomButton.addEventListener('click', () => {
-    universe = Universe.new();
-    drawCells();
-});
-
-
-// Jumpstart the game
-
-drawGrid();
-drawCells();
+// create and jumpstart the universe
+const renderer = new UniverseRenderer().jumpstart();
 play();

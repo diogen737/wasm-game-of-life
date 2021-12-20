@@ -1,10 +1,11 @@
-mod utils;
+// #![feature(test)]
+// mod utils;
+// extern crate test;
+// use utils::Timer;
 
 use wasm_bindgen::prelude::*;
-// use utils::*;
 
-// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
-// allocator.
+// when the `wee_alloc` feature is enabled, use `wee_alloc` as the global allocator
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -30,46 +31,44 @@ impl Cell {
 pub struct Universe {
     width: u32,
     height: u32,
+    /**
+     * double-buffered univerese state, vectors are allocated only once upon the universe creation
+     */
     cells: Vec<Cell>,
+    cells_next: Vec<Cell>,
+    /**
+     * indices of cells that has changed their state in the next tick
+     */
+    cells_diff: Vec<usize>
 }
 
 #[wasm_bindgen]
 impl Universe {
 
-    // =================================================================
-    // Public methods
-    // =================================================================
+    /**
+     * public methods
+     */
 
     pub fn new(width: u32, height: u32) -> Universe {
-        // set_panic_hook();
-
-        let cells = (0..width * height)
-            .map(|_| {
-            // .map(|i| {
-                // c/4 diagonal initialization
-                // if [1, 66, 128, 129, 130].contains(&i) {
-                //     Cell::Alive
-                // } else {
-                //     Cell::Dead
-                // }
-                // random field initialization
-                if js_sys::Math::random() > 0.5 {
-                    Cell::Alive
-                } else {
-                    Cell::Dead
-                }
-            })
+        let cells: Vec<Cell> = (0..width * height)
+            .map(|_| Cell::Dead)
             .collect();
+
+        let cells_next = cells.clone();
+        let cells_diff = Vec::new();
 
         Universe {
             width,
             height, 
-            cells
+            cells,
+            cells_next,
+            cells_diff
         }
     }
 
     pub fn tick(&mut self) {
-        let mut next = self.cells.clone();
+        // calculate next generation
+        self.cells_diff.clear();
 
         for row in 0..self.height {
             for col in 0..self.width {
@@ -78,62 +77,156 @@ impl Universe {
                 let live_neighbors = self.live_neighbors_count(row, col);
 
                 let next_cell = match (cell, live_neighbors) {
-                    // Rule 1: Any live cell with fewer than two live neighbours
+                    // rule 1: Any live cell with fewer than two live neighbours
                     // dies, as if caused by underpopulation.
                     (Cell::Alive, x) if x < 2 => Cell::Dead,
-                    // Rule 2: Any live cell with two or three live neighbours
+                    // rule 2: Any live cell with two or three live neighbours
                     // lives on to the next generation.
                     (Cell::Alive, 2) | (Cell::Alive, 3) => Cell::Alive,
-                    // Rule 3: Any live cell with more than three live
+                    // rule 3: Any live cell with more than three live
                     // neighbours dies, as if by overpopulation.
                     (Cell::Alive, x) if x > 3 => Cell::Dead,
-                    // Rule 4: Any dead cell with exactly three live neighbours
+                    // rule 4: Any dead cell with exactly three live neighbours
                     // becomes a live cell, as if by reproduction.
                     (Cell::Dead, 3) => Cell::Alive,
-                    // All other cells remain in the same state.
+                    // all other cells remain in the same state.
                     _ => cell
                 };
 
-                next[idx] = next_cell;
+                self.cells_next[idx] = next_cell;
+
+                // add new cell to the diff if it's changed in the next gen
+                if next_cell != cell {
+                    self.cells_diff.push(idx);
+                }
             }
         }
 
-        self.cells = next;
-    }
-
-    pub fn width(&self) -> u32 {
-        self.width
-    }
-
-    pub fn set_width(&mut self, width: u32) {
-        self.width = width;
-        // Resets all cells to the dead state.
-        self.cells = (0..width * self.height).map(|_| Cell::Dead).collect();
-    }
-
-    pub fn height(&self) -> u32 {
-        self.height
-    }
-
-    pub fn set_height(&mut self, height: u32) {
-        self.height = height;
-        // Resets all cells to the dead state.
-        self.cells = (0..self.width * height).map(|_| Cell::Dead).collect();
+        // copy new state into 'cells'
+        for (i, &cell) in self.cells_next.iter().enumerate() {
+            self.cells[i] = cell;
+        }
     }
 
     pub fn cells(&self) -> *const Cell {
         self.cells.as_ptr()
     }
 
+    pub fn cells_diff(&self) -> *const usize {
+        self.cells_diff.as_ptr()
+    }
+
+    pub fn cells_diff_len(&self) -> usize {
+        self.cells_diff.len()
+    }
+
     pub fn get_index(&self, row: u32, col: u32) -> usize {
         (row * self.width + col) as usize
     }
 
+    /**
+     * private service methods
+     */
+
+    fn live_neighbors_count(&self, row: u32, col: u32) -> u8 {
+        let mut count = 0;
+
+        let north = if row == 0 {
+            self.height - 1
+        } else {
+            row - 1 
+        };
+
+        let south = if row == self.height - 1 {
+            0
+        } else {
+            row + 1
+        };
+
+        let east = if col == 0 {
+            self.width - 1
+        } else {
+            col - 1
+        };
+
+        let west = if col == self.width - 1 {
+            0
+        } else {
+            col + 1
+        };
+
+        let ne = self.get_index(north, east);
+        count += self.cells[ne] as u8;
+
+        let e = self.get_index(row, east);
+        count += self.cells[e] as u8;
+
+        let se = self.get_index(south, east);
+        count += self.cells[se] as u8;
+
+        let s = self.get_index(south, col);
+        count += self.cells[s] as u8;
+
+        let sw = self.get_index(south, west);
+        count += self.cells[sw] as u8;
+
+        let w = self.get_index(row, west);
+        count += self.cells[w] as u8;
+
+        let nw = self.get_index(north, west);
+        count += self.cells[nw] as u8;
+
+        let n = self.get_index(north, col);
+        count += self.cells[n] as u8;
+
+        count
+    }
+}
+
+/**
+ * explicit changes in the universe
+ */
+#[wasm_bindgen]
+impl Universe {
+    /**
+     * toggle particular cell
+     */
     pub fn toggle_cell(&mut self, row: u32, col: u32) {
         let idx = self.get_index(row, col);
         self.cells[idx].toggle();
+        self.cells_diff.push(idx);
     }
 
+    /**
+     * reset all cell to dead
+     */
+    pub fn set_all_dead(&mut self) {
+        self.cells_diff.clear();
+        for (i, cell) in self.cells.iter_mut().enumerate() {
+            *cell = Cell::Dead;
+            self.cells_diff.push(i);
+        }
+    }
+
+    /**
+     * set each cell to a random state
+     */
+    pub fn set_random(&mut self) {
+        self.cells_diff.clear();
+        for (i, cell) in self.cells.iter_mut().enumerate() {
+            *cell = if js_sys::Math::random() > 0.5 {
+                Cell::Alive
+            } else {
+                Cell::Dead
+            };
+            self.cells_diff.push(i);
+        }
+    }
+
+    /**
+     * c/4 diagonal glider
+     * https://www.conwaylife.com/wiki/C/4_diagonal
+     */
     pub fn spawn_glider(&mut self, row: u32, col: u32) {
         self.set_cells(&[
             (row, col - 1),
@@ -144,6 +237,10 @@ impl Universe {
         ]);
     }
 
+    /**
+     * pulsar
+     * https://www.conwaylife.com/wiki/Pulsar
+     */
     pub fn spawn_pulsar(&mut self, row: u32, col: u32) {
         self.set_cells(&[
             // outer rim
@@ -205,31 +302,12 @@ impl Universe {
             (row - 2, col + 1),
         ]);
     }
-
-    // =================================================================
-    // Private service methods
-    // =================================================================
-
-    fn live_neighbors_count(&self, row: u32, col: u32) -> u8 {
-        let mut count = 0;
-        for delta_row in [self.height - 1, 0, 1].iter().cloned() {
-            for delta_col in [self.width - 1, 1, 0].iter().cloned() {
-                if delta_row == 0 && delta_col == 0 {
-                    continue
-                }
-
-                let neighbor_row = (row + delta_row) % self.height;
-                let neighbor_col = (col + delta_col) % self.width;
-                let neighbor_idx = self.get_index(neighbor_row, neighbor_col);
-                count += self.cells[neighbor_idx] as u8;
-            }
-        }
-        count
-    }
 }
 
-// methods for internal testing, not exposing them to the JS code
 
+/**
+ * methods for internal testing, not exposing them to the JS code
+ */
 impl Universe {
     pub fn get_cells(&self) -> &[Cell] {
         &self.cells
@@ -241,6 +319,17 @@ impl Universe {
             let col = (col + self.width) % self.width;
             let idx = self.get_index(row, col);
             self.cells[idx] = Cell::Alive;
+            self.cells_diff.push(idx);
         }
     }
 }
+
+
+// #[bench]
+// fn universe_ticks(b: &mut test::Bencher) {
+//     let mut universe = Universe::new(300, 300);
+
+//     b.iter(|| {
+//         universe.tick();
+//     });
+// }
