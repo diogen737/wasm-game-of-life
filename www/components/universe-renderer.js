@@ -15,10 +15,11 @@ export class UniverseRenderer {
         this.ALIVE_COLOR = docStyles.getPropertyValue('--theme-cell-alive');;
         this.CELL_SIZE = 7;
 
+        // make canvas fill the screen
         const canvasContainer = document.querySelector('.canvas-container');
         this.uWidth = ~~(canvasContainer.clientWidth / (this.CELL_SIZE + 1));
-        // this.uWidth = 300;
         this.uHeight = ~~(canvasContainer.clientHeight / (this.CELL_SIZE + 1));
+        // this.uWidth = 300;
         // this.uHeight = 300;
 
         this.canvas = document.getElementById('wasm-canvas');
@@ -62,8 +63,6 @@ export class UniverseRenderer {
 
     handle_canvas_click(clickEvent, modifier) {
         if (clickEvent.srcElement == this.canvas) {
-            console.log(clickEvent);
-
             const boundingRect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / boundingRect.width;
             const scaleY = this.canvas.height / boundingRect.height;

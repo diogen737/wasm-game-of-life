@@ -6,7 +6,6 @@ import 'bootstrap/js/dist/offcanvas';
 
 /**
  * TODO:
- * - buttons for clear/random state
  * - toggle for wrap/limited boundaries
  * - offcanvas for the game's rules
  * - double tap on mobile for predefined counstructs

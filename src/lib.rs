@@ -319,6 +319,7 @@ impl Universe {
             let col = (col + self.width) % self.width;
             let idx = self.get_index(row, col);
             self.cells[idx] = Cell::Alive;
+            self.cells_diff.push(idx);
         }
     }
 }
