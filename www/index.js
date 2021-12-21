@@ -34,13 +34,13 @@ const isPaused = () => {
 }
 
 const play = () => {
-    pauseButton.querySelector('img').setAttribute('src', '/assets/pause.svg');
+    pauseButton.querySelector('img').setAttribute('src', 'assets/pause.svg');
     tickButton.disabled = true;
     renderLoop();
 }
 
 const pause = () => {
-    pauseButton.querySelector('img').setAttribute('src', '/assets/play.svg');
+    pauseButton.querySelector('img').setAttribute('src', 'assets/play.svg');
     cancelAnimationFrame(frameId);
     tickButton.disabled = false;
     frameId = null;
