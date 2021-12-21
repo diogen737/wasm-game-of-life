@@ -1,5 +1,6 @@
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const { BaseHrefWebpackPlugin } = require('base-href-webpack-plugin');
 const { merge } = require('webpack-merge');
 
 const commonConfig = require('./webpack.config.common');
@@ -21,6 +22,7 @@ module.exports = merge(commonConfig, {
     ]
   },
   plugins: [
+    new BaseHrefWebpackPlugin({ baseHref: '/wasm-hame-of-life/' }),
     new MiniCssExtractPlugin({
       filename: '[name].[fullhash].css',
     }),
