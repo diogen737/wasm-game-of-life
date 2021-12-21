@@ -22,7 +22,7 @@ module.exports = merge(commonConfig, {
     ]
   },
   plugins: [
-    new BaseHrefWebpackPlugin({ baseHref: '/wasm-hame-of-life/' }),
+    new BaseHrefWebpackPlugin({ baseHref: '/wasm-game-of-life/' }),
     new MiniCssExtractPlugin({
       filename: '[name].[fullhash].css',
     }),
