@@ -31,6 +31,7 @@ impl Cell {
 pub struct Universe {
     width: u32,
     height: u32,
+    size: u32,
     /**
      * double-buffered univerese state, vectors are allocated only once upon the universe creation
      */
@@ -39,7 +40,11 @@ pub struct Universe {
     /**
      * indices of cells that has changed their state in the next tick
      */
-    cells_diff: Vec<usize>
+    cells_diff: Vec<usize>,
+    /**
+     * indicates wether the universe wraps around on the edges or it is flat
+     */
+    is_compact: bool
 }
 
 #[wasm_bindgen]
@@ -59,10 +64,12 @@ impl Universe {
 
         Universe {
             width,
-            height, 
+            height,
+            size: width * height,
             cells,
             cells_next,
-            cells_diff
+            cells_diff,
+            is_compact: true
         }
     }
 
@@ -124,6 +131,20 @@ impl Universe {
         (row * self.width + col) as usize
     }
 
+    pub fn get_cell(&self, row: u32, col: u32) -> Cell {
+        let idx = self.get_index(row, col);
+        if idx >= self.size as usize {
+            // everything outside is dead
+            Cell::Dead
+        } else {
+            self.cells[idx]
+        }
+    }
+
+    pub fn set_compact(&mut self, val: bool) {
+        self.is_compact = val;
+    }
+
     /**
      * private service methods
      */
@@ -132,52 +153,53 @@ impl Universe {
         let mut count = 0;
 
         let north = if row == 0 {
-            self.height - 1
+            if self.is_compact {
+                self.height - 1 // bottom row
+            } else {
+                self.height // outside the universe, 'get_cell' will return Dead
+            }
         } else {
-            row - 1 
+            row - 1
         };
 
         let south = if row == self.height - 1 {
-            0
+            if self.is_compact {
+                0 // top row
+            } else {
+                self.height // outside the universe, 'get_cell' will return Dead
+            }
         } else {
             row + 1
         };
 
         let east = if col == 0 {
-            self.width - 1
+            if self.is_compact {
+                self.width - 1 // most right column
+            } else {
+                self.width // outside the universe, 'get_cell' will return Dead
+            }
         } else {
             col - 1
         };
 
         let west = if col == self.width - 1 {
-            0
+            if self.is_compact {
+                0 // most left column
+            } else {
+                self.width // outside the universe, 'get_cell' will return Dead
+            }
         } else {
             col + 1
         };
 
-        let ne = self.get_index(north, east);
-        count += self.cells[ne] as u8;
-
-        let e = self.get_index(row, east);
-        count += self.cells[e] as u8;
-
-        let se = self.get_index(south, east);
-        count += self.cells[se] as u8;
-
-        let s = self.get_index(south, col);
-        count += self.cells[s] as u8;
-
-        let sw = self.get_index(south, west);
-        count += self.cells[sw] as u8;
-
-        let w = self.get_index(row, west);
-        count += self.cells[w] as u8;
-
-        let nw = self.get_index(north, west);
-        count += self.cells[nw] as u8;
-
-        let n = self.get_index(north, col);
-        count += self.cells[n] as u8;
+         count += self.get_cell(north, east) as u8 // north-east
+              + self.get_cell(row, east) as u8 // east
+              + self.get_cell(south, east) as u8 // south-east
+              + self.get_cell(south, col) as u8 // south
+              + self.get_cell(south, west) as u8 // south-west
+              + self.get_cell(row, west) as u8 // west
+              + self.get_cell(north, west) as u8 // north-west
+              + self.get_cell(north, col) as u8; // north
 
         count
     }
@@ -213,6 +235,7 @@ impl Universe {
      */
     pub fn set_random(&mut self) {
         self.cells_diff.clear();
+        // TODO: rust's rand ?
         for (i, cell) in self.cells.iter_mut().enumerate() {
             *cell = if js_sys::Math::random() > 0.5 {
                 Cell::Alive
@@ -313,13 +336,22 @@ impl Universe {
         &self.cells
     }
 
+    pub fn size(&self) -> u32 {
+        self.size
+    }
+
     pub fn set_cells(&mut self, new_cells: &[(u32, u32)]) {
-        for (row, col) in new_cells.iter().cloned() {
-            let row = (row + self.height) % self.height;
-            let col = (col + self.width) % self.width;
+        for (mut row, mut col) in new_cells.iter().cloned() {
+            // wrap overflowing cells around the universe
+            if self.is_compact {
+                row = (row + self.height) % self.height;
+                col = (col + self.width) % self.width;
+            }
             let idx = self.get_index(row, col);
-            self.cells[idx] = Cell::Alive;
-            self.cells_diff.push(idx);
+            if idx < self.size as usize {
+                self.cells[idx] = Cell::Alive;
+                self.cells_diff.push(idx);
+            }
         }
     }
 }
